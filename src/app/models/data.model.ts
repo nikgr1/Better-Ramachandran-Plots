@@ -32,7 +32,7 @@ export const extractPhi = (residues: Residue[]): (number | null)[] => residues.m
 export const extractPsi = (residues: Residue[]): (number | null)[] => residues.map(x => x.psi);
 
 export function extractText(residues: Residue[]): string[] {
-  return residues.map(residue => `${residue.CA.resName} ${residue.CA.resSeq} ${residue.CA.chainID}`)
+  return residues.map(residue => `${residue.CA.resName} ${residue.CA.resSeq} ${residue.CA.chainID} (B-f.: ${residue.CA.tempFactor.toFixed(3)})`)
 }
 
 export function extractTempFactor(residues: Residue[]): number[] {
@@ -59,6 +59,19 @@ export function groupResiduesByCAprop(residues: Residue[], key: keyof Atom): [{ 
 
 export function filterResiduesByName(residues: Residue[], names: string[]): Residue[] {
   return residues.filter(residue => names.includes(residue.CA.resName));
+}
+
+export function filterResiduesByChain(residues: Residue[], chains: string[]): Residue[] {
+  return residues.filter(residue => chains.includes(residue.CA.chainID));
+}
+
+export function collectChains(residues: Residue[]): string[] {
+  let chains: string[] = [];
+  residues.forEach(residue => {
+    if(!chains.includes(residue.CA.chainID))
+      chains.push(residue.CA.chainID);
+  })
+  return chains;
 }
 
 export function generateFileFromResidues(residues: Residue[], sep = ','): string {

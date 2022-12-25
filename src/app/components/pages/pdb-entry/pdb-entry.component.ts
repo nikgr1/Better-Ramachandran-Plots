@@ -3,11 +3,12 @@ import {ActivatedRoute} from "@angular/router";
 import {catchError, map, merge, Observable, of, publishLast, refCount, Subscription, switchMap, tap} from "rxjs";
 import {PdbService} from "../../../services/pdb.service";
 import {
+  collectChains,
   extractPhi,
   extractPosition,
   extractPsi,
   extractTempFactor,
-  extractText,
+  extractText, filterResiduesByChain,
   filterResiduesByName,
   generateFileFromResidues,
   groupResiduesByCAprop,
@@ -68,6 +69,7 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
     {value: 'chain', view: 'Chain'},
     {value: 'tempFactor', view: 'Temperature factor (Cα)'},
   ]
+  public chainOptions: string[] = [];
   public resNameOptions: { value: string, view: string }[] = [
     {value: 'ALA', view: 'Alanine (ALA, A)'},
     {value: 'ARG', view: 'Arginine (ARG, R)'},
@@ -100,6 +102,7 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
   public RPSettings = new FormGroup({
     colorStyle: new FormControl('default'),
     resNameFilter: new FormControl(this.resNameOptions.map(x => x.value)),
+    chainFilter: new FormControl(this.chainOptions),
     tableFormat: new FormControl('csv'),
   })
   public imgDownloadSetting = new FormControl('png');
@@ -131,6 +134,7 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
 
   generateDataFromResidues(residues: Residue[]) {
     residues = filterResiduesByName(residues, this.RPSettings.value.resNameFilter!);
+    residues = filterResiduesByChain(residues, this.RPSettings.value.chainFilter!);
     let sep = this.tableFormatOptions.find(x => x.value == this.RPSettings.value.tableFormat)!.sep;
     this.blob = new Blob([generateFileFromResidues(residues, sep)], {type: 'application/octet-stream'});
     this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(window.URL.createObjectURL(this.blob));
@@ -212,6 +216,8 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
       }),
       tap(residues => {
         this.pdbStatus = DataProcessing.Complete;
+        this.chainOptions = collectChains(residues).sort();
+        this.selectAllChains();
       }),
       publishLast(),
       refCount(),
@@ -257,7 +263,13 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
   }
 
   selectAllResn() {
-    this.RPSettings.patchValue({resNameFilter: this.resNameOptions.map(x => x.value)})
+    this.RPSettings.patchValue({resNameFilter: this.resNameOptions.map(x => x.value)});
+  }
+  clearAllChains() {
+    this.RPSettings.patchValue({chainFilter: []});
+  }
+  selectAllChains() {
+    this.RPSettings.patchValue({chainFilter: this.chainOptions});
   }
 
   isColorCustom() {
@@ -267,4 +279,6 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
   isFilterCustom() {
     return !this.resNameOptions.map(x => x.value).every(x => this.RPSettings.value.resNameFilter!.includes(x));
   }
+
+
 }
