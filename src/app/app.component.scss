@@ -1,0 +1,85 @@
+$toolbar-h: 64px;
+$footer-h: 300px;
+
+.content-wrapper {
+  padding-top: 50px;
+  min-height: calc(100vh - $toolbar-h - $footer-h);
+}
+
+footer {
+  height: $footer-h;
+}
+.footer {
+  background-position: right 0 bottom 0;
+  background-image: url("../../src/assets/amyloid_full4.png");
+  //background-size: contain;
+  background-size: 600px 300px;
+  background-repeat: no-repeat;
+}
+
+
+
+
+$curved-corner-size: 32px;
+$curved-corner-color: #3f51b5;
+.logo-wrapper {
+  display: flex;
+  flex-direction: row;
+}
+.logo-container {
+  padding: 0 calc($curved-corner-size/ 2);
+  border-bottom-left-radius: calc($curved-corner-size);
+  border-bottom-right-radius: calc($curved-corner-size);
+  background: $curved-corner-color;
+  color: white;
+  display: flex;
+  flex-direction: row;
+  gap: calc($curved-corner-size/ 2);
+  align-items: center;
+}
+mat-toolbar {
+  background: white!important;
+}
+
+.curved-corner-bottomleft,
+.curved-corner-bottomright,
+.curved-corner-topleft,
+.curved-corner-topright {
+  width: $curved-corner-size;
+  height: $curved-corner-size;
+  overflow: hidden;
+  position: relative;
+}
+.curved-corner-bottomleft:before,
+.curved-corner-bottomright:before,
+.curved-corner-topleft:before,
+.curved-corner-topright:before {
+  content: "";
+  display: block;
+  width: 200%;
+  height: 200%;
+  position: absolute;
+  border-radius: 50%;
+}
+.curved-corner-bottomleft:before {
+  bottom: 0;
+  left: 0;
+  box-shadow: calc(-1*$curved-corner-size/2) calc($curved-corner-size/2) 0 0 $curved-corner-color;
+}
+.curved-corner-bottomright:before {
+  bottom: 0;
+  right: 0;
+  box-shadow: calc($curved-corner-size/2) calc($curved-corner-size/2) 0 0 $curved-corner-color;
+}
+.curved-corner-topleft:before {
+  top: 0;
+  left: 0;
+  box-shadow: calc(-1*$curved-corner-size/2) calc(-1*$curved-corner-size/2) 0 0 $curved-corner-color;
+}
+.curved-corner-topright:before {
+  top: 0;
+  right: 0;
+  box-shadow: calc($curved-corner-size/2) calc(-1*$curved-corner-size/2) 0 0 $curved-corner-color;
+}
+
+

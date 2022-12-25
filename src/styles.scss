@@ -1,1 +1,31 @@
-/* You can add global styles to this file, and also import other style files */
+/* You can add global styles to this file, and also import other.ts style files */
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+.flex-spacer {
+  flex: 1 1 auto;
+}
+
+mat-card-content {
+  margin: 0 16px
+}
+plotly-plot {
+  margin: 16px 0;
+  display: block;
+}
+
+.round-borders {
+  border-radius: 24px!important;
+}
+//
+//body {
+//  background-position: right 0 bottom 0;
+//  background-image: url("assets/amyloid_full2.png");
+//  //background-size: contain;
+//  background-size: 1200px 600px;
+//  background-repeat: no-repeat;
+//}
+
+/* Importing Bootstrap SCSS file. */
+@import '~bootstrap/scss/bootstrap';

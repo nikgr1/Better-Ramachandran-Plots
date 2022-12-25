@@ -1,0 +1,156 @@
+<mat-card *ngIf="pdbStatus == 'complete'" class="round-borders pdb-entry-wrapper">
+  <mat-card-header>
+    <mat-card-title-group>
+      <mat-card-subtitle>
+        <a routerLink=""
+           mat-mini-fab
+           color="primary"
+           aria-label="Return to entry selection"
+           matTooltip="Return to entry selection"
+           class="link-in-title">
+          <mat-icon>arrow_back</mat-icon>
+        </a>
+        <span>Return to entry selection page</span>
+      </mat-card-subtitle>
+      <mat-card-title>
+        <a href="https://www.rcsb.org/structure/{{pdbID}}"
+           mat-fab
+           color="accent"
+           aria-label="Visit entry page on RCSB PDB site"
+           matTooltip="Visit {{pdbID}} entry page on RCSB PDB site"
+           class="link-in-title">
+          <mat-icon>open_in_new</mat-icon>
+        </a>
+        <span>PDB ID: <b>{{pdbID}}</b></span>
+      </mat-card-title>
+    </mat-card-title-group>
+  </mat-card-header>
+
+  <mat-card-content>
+    <mat-accordion>
+      <mat-expansion-panel class="round-borders settings-wrapper" (opened)="panelOpenState = true"
+                           (closed)="panelOpenState = false">
+        <mat-expansion-panel-header
+          class="round-borders"
+          matTooltipPosition="above"
+          [matTooltip]="(!panelOpenState ? 'Show': 'Hide') + ' plot settings'">
+          <mat-panel-title>
+            <span>
+              <mat-icon inline>settings</mat-icon>
+              Plot settings
+            </span>
+          </mat-panel-title>
+          <mat-panel-description>
+            <mat-icon inline *ngIf="isColorCustom()" color="primary">palette</mat-icon>
+            <mat-icon inline *ngIf="isFilterCustom()" color="primary">filter_alt</mat-icon>
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <form class="form-settings" action="" [formGroup]="RPSettings">
+
+          <section class="color-wrapper">
+            <span>
+              <mat-icon inline>palette</mat-icon>
+              Color by:
+            </span>
+            <mat-button-toggle-group class="round-borders"
+                                     formControlName="colorStyle"
+                                     name="colorStyle"
+                                     aria-label="Color Style"
+                                     (change)="onColorStyleSelected($event)">
+              <mat-button-toggle *ngFor="let option of colorStyleOptions"
+                                 [value]="option.value">{{option.view}}</mat-button-toggle>
+            </mat-button-toggle-group>
+          </section>
+
+          <section class="filter-wrapper">
+            <mat-form-field appearance="standard">
+              <mat-label>
+                <mat-icon inline>filter_alt</mat-icon>
+                Filter by residue
+              </mat-label>
+              <mat-select formControlName="resNameFilter" multiple>
+                <mat-option *ngFor="let option of resNameOptions" [value]="option.value">{{option.view}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <button mat-button class="round-borders" (click)="selectAllResn()">
+              <mat-icon inline>done_all</mat-icon>
+              Select All
+            </button>
+            <button mat-button class="round-borders" (click)="clearAllResn()">
+              <mat-icon inline>clear</mat-icon>
+              Clear All
+            </button>
+          </section>
+
+          <section class="table-format-wrapper">
+            <span>
+              <mat-icon inline>download</mat-icon>
+              Table formats (for downloading):
+            </span>
+            <mat-button-toggle-group class="round-borders"
+                                     formControlName="tableFormat"
+                                     name="tableFormat"
+                                     aria-label="Table Format">
+              <mat-button-toggle *ngFor="let option of tableFormatOptions"
+                                 [value]="option.value">{{option.view}}</mat-button-toggle>
+            </mat-button-toggle-group>
+          </section>
+
+          <section class="img-format-wrapper">
+          <span>
+              <mat-icon inline>download</mat-icon>
+              Image formats (for downloading):
+            </span>
+            <mat-button-toggle-group class="round-borders"
+                                     [formControl]="imgDownloadSetting"
+                                     name="imgFormat"
+                                     aria-label="Image Format">
+              <mat-button-toggle *ngFor="let option of imgDownloadOptions"
+                                 [value]="option.value">{{option.view}}</mat-button-toggle>
+            </mat-button-toggle-group>
+          </section>
+        </form>
+
+      </mat-expansion-panel>
+    </mat-accordion>
+
+
+    <div class="plot-wrapper round-borders">
+      <plotly-plot [data]="(data$ | async)!" [layout]="(layout$ | async)!" [config]="(config$| async)!">
+      </plotly-plot>
+    </div>
+
+    <div>
+      <p>
+        <a [href]="fileUrl"
+           [download]="pdbID + '_torsion_angles.' + RPSettings.value.tableFormat"
+           mat-fab
+           color="primary"
+           aria-label="Download file containing information about chains, positions, residue names and their phi and psi torsion angles"
+           [matTooltip]="'Download ' + getTableFormatView() + ' file containing information about chains, positions, residue names and their phi and psi torsion angles'"
+           class="link-in-title">
+          <mat-icon>download</mat-icon>
+        </a>
+        <span>Download {{getTableFormatView()}} file with torsion angles</span>
+      </p>
+      <!--      <a [href]="fileUrl" download="torsion_angles.txt" mat-button>Download CSV file with torsion angles</a>-->
+    </div>
+  </mat-card-content>
+</mat-card>
+
+
+<div class="page-center" *ngIf="pdbStatus == 'loading'">
+  <mat-spinner></mat-spinner>
+  <p>Loading entry data from RCSB PDB...</p>
+</div>
+
+<div class="page-center" *ngIf="pdbStatus == 'calculating'">
+  <mat-spinner></mat-spinner>
+  <p>Calculating angles...</p>
+</div>
+
+<div class="page-center" *ngIf="pdbStatus == 'error'">
+  <mat-icon color="warn" style="transform: scale(5); height: 40px;width: 40px;">cancel</mat-icon>
+  <p>An error has occurred!</p>
+  <p>{{errorMsg}}</p>
+</div>

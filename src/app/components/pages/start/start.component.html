@@ -1,0 +1,38 @@
+<mat-card class="round-borders">
+  <mat-card-header>
+    <mat-card-title>Calculate phi and psi torsion angles</mat-card-title>
+    <mat-card-subtitle>Select Protein Data Bank entry to draw it's Ramachandran plot</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <mat-form-field>
+      <mat-label>PDB ID</mat-label>
+      <input matInput
+             (keyup.enter)="onEnter()"
+             [formControl]="pdbIdControl"
+             type="text"
+             placeholder="Ex. 1my2"
+      (input)="onInput()">
+      <mat-error *ngIf="pdbIdControl.hasError('required')">
+        PDB ID is required
+      </mat-error>
+      <mat-error *ngIf="pdbIdControl.hasError('exactLength')">
+        PDB ID must be 4 characters long
+      </mat-error>
+      <mat-error *ngIf="pdbIdControl.hasError('pattern')">
+        PDB ID must contain only alphanumeric characters
+      </mat-error>
+    </mat-form-field>
+  </mat-card-content>
+  <mat-card-actions align="end">
+    <button mat-flat-button
+            color="warn"
+            class="round-borders"
+            aria-label="Calculate torsion angles for selected PDB entry"
+            [matTooltip]="'Fetch PDB entry ' + pdbIdControl.value + ' and calculate torsion angles for this structure'"
+            [disabled]="pdbIdControl.invalid"
+            [routerLink]="'pdb/'+pdbIdControl.value">
+      <mat-icon inline>search</mat-icon>
+      Search
+    </button>
+  </mat-card-actions>
+</mat-card>
