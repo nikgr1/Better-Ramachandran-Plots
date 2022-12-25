@@ -21,6 +21,7 @@ import {MatCardModule} from "@angular/material/card";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {MatButtonToggleModule} from "@angular/material/button-toggle";
 import {MatSelectModule} from "@angular/material/select";
+import {MatSliderModule} from "@angular/material/slider";
 PlotlyModule.plotlyjs = PlotlyJS;
 
 @NgModule({
@@ -29,26 +30,27 @@ PlotlyModule.plotlyjs = PlotlyJS;
     PdbEntryComponent,
     StartComponent
   ],
-  imports: [
-    PlotlyModule,
-    BrowserModule,
-    AppRoutingModule,
-    BrowserAnimationsModule,
-    HttpClientModule,
-    MatToolbarModule,
-    MatButtonModule,
-    MatIconModule,
-    MatTooltipModule,
-    MatProgressSpinnerModule,
-    MatInputModule,
-    MatExpansionModule,
-    NgbModule,
-    MatCardModule,
-    FormsModule,
-    MatButtonToggleModule,
-    ReactiveFormsModule,
-    MatSelectModule
-  ],
+    imports: [
+        PlotlyModule,
+        BrowserModule,
+        AppRoutingModule,
+        BrowserAnimationsModule,
+        HttpClientModule,
+        MatToolbarModule,
+        MatButtonModule,
+        MatIconModule,
+        MatTooltipModule,
+        MatProgressSpinnerModule,
+        MatInputModule,
+        MatExpansionModule,
+        NgbModule,
+        MatCardModule,
+        FormsModule,
+        MatButtonToggleModule,
+        ReactiveFormsModule,
+        MatSelectModule,
+        MatSliderModule
+    ],
   providers: [],
   bootstrap: [AppComponent]
 })

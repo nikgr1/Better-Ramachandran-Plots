@@ -42,7 +42,8 @@
           </mat-panel-title>
           <mat-panel-description>
             <mat-icon inline *ngIf="isColorCustom()" color="primary">palette</mat-icon>
-            <mat-icon inline *ngIf="isFilterCustom()" color="primary">filter_alt</mat-icon>
+            <mat-icon inline *ngIf="isResnFilterCustom()" color="primary">filter_alt</mat-icon>
+            <mat-icon inline *ngIf="isChainFilterCustom()" color="primary">filter_alt</mat-icon>
           </mat-panel-description>
         </mat-expansion-panel-header>
         <form class="form-settings" action="" [formGroup]="RPSettings">
@@ -100,6 +101,13 @@
               <mat-icon inline>clear</mat-icon>
               Clear All
             </button>
+          </section>
+
+          <section>
+            <span>Drawer size - {{RPSettings.value.drawerSize}}</span>
+            <mat-slider min="2" max="10" step="1" formControlName="drawerSize">
+              <input matSliderThumb>
+            </mat-slider>
           </section>
 
           <section class="table-format-wrapper">

@@ -45,7 +45,7 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
       filename: 'custom_image',
       height: 700,
       width: 700,
-      scale: 1 // Multiply title/legend/axis/canvas sizes by this factor
+      scale: 2 // Multiply title/legend/axis/canvas sizes by this factor
     }
   };
   public layoutInit: Partial<Plotly.Layout> = {
@@ -55,11 +55,13 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
     title: '',
     xaxis: {
       title: 'Phi (φ), °',
-      range: [-180, 180]
+      dtick: 30,
+      range: [-180, 180],
     },
     yaxis: {
       title: 'Psi (ψ), °',
-      range: [-180, 180]
+      dtick: 30,
+      range: [-180, 180],
     },
   }
   public colorStyleOptions: { value: string, view: string }[] = [
@@ -103,6 +105,7 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
     colorStyle: new FormControl('default'),
     resNameFilter: new FormControl(this.resNameOptions.map(x => x.value)),
     chainFilter: new FormControl(this.chainOptions),
+    drawerSize: new FormControl(5),
     tableFormat: new FormControl('csv'),
   })
   public imgDownloadSetting = new FormControl('png');
@@ -133,30 +136,35 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
 
 
   generateDataFromResidues(residues: Residue[]) {
+    console.log(residues);
     residues = filterResiduesByName(residues, this.RPSettings.value.resNameFilter!);
-    residues = filterResiduesByChain(residues, this.RPSettings.value.chainFilter!);
+    if (this.chainOptions.length != 0) {
+      console.log(this.chainOptions.length)
+      residues = filterResiduesByChain(residues, this.RPSettings.value.chainFilter!);
+    }
+    console.log(residues);
     let sep = this.tableFormatOptions.find(x => x.value == this.RPSettings.value.tableFormat)!.sep;
     this.blob = new Blob([generateFileFromResidues(residues, sep)], {type: 'application/octet-stream'});
     this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(window.URL.createObjectURL(this.blob));
     switch (this.RPSettings.value.colorStyle) {
       case 'tempFactor':
-        return [{...this.getStandardDataElement(residues), marker: {color: extractTempFactor(residues)}}];
+        return [{...this.getStandardDataElement(residues), marker: {size: this.RPSettings.value.drawerSize ,color: extractTempFactor(residues)}}];
       case 'residue':
         return groupResiduesByCAprop(residues, 'resName').map(
           group => {
-            return {...this.getStandardDataElement(group.residues), name: group.key}
+            return {...this.getStandardDataElement(group.residues), name: group.key, marker: {size: this.RPSettings.value.drawerSize}}
           }
         );
       case 'position':
-        return [{...this.getStandardDataElement(residues), marker: {color: extractPosition(residues)}}];
+        return [{...this.getStandardDataElement(residues),  marker: {size: this.RPSettings.value.drawerSize, color: extractPosition(residues)}}];
       case 'chain':
         return groupResiduesByCAprop(residues, 'chainID').map(
           group => {
-            return {...this.getStandardDataElement(group.residues), name: "Chain " + group.key}
+            return {...this.getStandardDataElement(group.residues), name: "Chain " + group.key, marker: {size: this.RPSettings.value.drawerSize}}
           }
         );
       default:
-        return [this.getStandardDataElement(residues)]
+        return [{...this.getStandardDataElement(residues), marker: {size: this.RPSettings.value.drawerSize}}]
     }
   }
 
@@ -276,8 +284,12 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
     return this.RPSettings.value.colorStyle != 'default';
   }
 
-  isFilterCustom() {
+  isResnFilterCustom() {
     return !this.resNameOptions.map(x => x.value).every(x => this.RPSettings.value.resNameFilter!.includes(x));
+  }
+
+  isChainFilterCustom() {
+    return !this.chainOptions.every(x => this.RPSettings.value.chainFilter!.includes(x));
   }
 
 
