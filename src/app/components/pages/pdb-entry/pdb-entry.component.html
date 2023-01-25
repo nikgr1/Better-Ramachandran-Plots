@@ -1,51 +1,51 @@
-<mat-card *ngIf="pdbStatus == 'complete'" class="round-borders pdb-entry-wrapper">
-  <mat-card-header>
-    <mat-card-title-group>
-      <mat-card-subtitle>
-        <a routerLink=""
-           mat-mini-fab
-           color="primary"
-           aria-label="Return to entry selection"
-           matTooltip="Return to entry selection"
-           class="link-in-title">
-          <mat-icon>arrow_back</mat-icon>
-        </a>
-        <span>Return to entry selection page</span>
-      </mat-card-subtitle>
-      <mat-card-title>
-        <a href="https://www.rcsb.org/structure/{{pdbID}}"
-           mat-fab
-           color="accent"
-           aria-label="Visit entry page on RCSB PDB site"
-           matTooltip="Visit {{pdbID}} entry page on RCSB PDB site"
-           class="link-in-title">
-          <mat-icon>open_in_new</mat-icon>
-        </a>
-        <span>PDB ID: <b>{{pdbID}}</b></span>
-      </mat-card-title>
-    </mat-card-title-group>
-  </mat-card-header>
+<div *ngIf="pdbStatus == 'complete'" class="pdb-entry-wrapper">
+  <div class="horizontal-content">
+    <div class="icon-text-wrap">
+      <a href="https://www.rcsb.org/structure/{{pdbID}}"
+         mat-fab
+         color="accent"
+         aria-label="Visit entry page on RCSB PDB site"
+         matTooltip="Visit {{pdbID}} entry page on RCSB PDB site">
+        <mat-icon>open_in_new</mat-icon>
+      </a>
+      <div class="text">
+        <div>PDB ID: <b style="font-size: 17px;">{{pdbID}}</b></div>
+      </div>
+    </div>
 
-  <mat-card-content>
-    <mat-accordion>
-      <mat-expansion-panel class="round-borders settings-wrapper" (opened)="panelOpenState = true"
-                           (closed)="panelOpenState = false">
-        <mat-expansion-panel-header
-          class="round-borders"
-          matTooltipPosition="above"
-          [matTooltip]="(!panelOpenState ? 'Show': 'Hide') + ' plot settings'">
-          <mat-panel-title>
+    <div class="icon-text-wrap">
+      <a routerLink=""
+         mat-mini-fab
+         color="primary"
+         aria-label="Return to entry selection"
+         matTooltip="Return to entry selection">
+        <mat-icon>arrow_back</mat-icon>
+      </a>
+      <div class="text text-secondary">
+        <div>Return to entry selection page</div>
+      </div>
+    </div>
+  </div>
+
+  <mat-accordion>
+    <mat-expansion-panel class="round-borders expansion-panel" (opened)="panelStates.settings = true"
+                         (closed)="panelStates.settings = false">
+      <mat-expansion-panel-header
+        class="round-borders"
+        matTooltipPosition="above"
+        [matTooltip]="(!panelStates.settings ? 'Show': 'Hide') + ' plot settings'">
+        <mat-panel-title>
             <span>
               <mat-icon inline>settings</mat-icon>
               Plot settings
             </span>
-          </mat-panel-title>
-          <mat-panel-description>
-            <mat-icon inline *ngIf="isColorCustom()" color="primary">palette</mat-icon>
-            <mat-icon inline *ngIf="isResnFilterCustom()" color="primary">filter_alt</mat-icon>
-            <mat-icon inline *ngIf="isChainFilterCustom()" color="primary">filter_alt</mat-icon>
-          </mat-panel-description>
-        </mat-expansion-panel-header>
+        </mat-panel-title>
+        <mat-panel-description>
+          <mat-icon inline *ngIf="isColorCustom()" color="primary">palette</mat-icon>
+          <mat-icon inline *ngIf="isResnFilterCustom()" color="primary">filter_alt</mat-icon>
+          <mat-icon inline *ngIf="isChainFilterCustom()" color="primary">filter_alt</mat-icon>
+        </mat-panel-description>
+      </mat-expansion-panel-header>
         <form class="form-settings" action="" [formGroup]="RPSettings">
 
           <section class="color-wrapper">
@@ -139,45 +139,91 @@
           </section>
         </form>
 
-      </mat-expansion-panel>
-    </mat-accordion>
+    </mat-expansion-panel>
 
+    <mat-expansion-panel class="round-borders expansion-panel" (opened)="panelStates.plot = true"
+                         (closed)="panelStates.plot = false" >
+      <mat-expansion-panel-header
+        class="round-borders"
+        matTooltipPosition="above"
+        [matTooltip]="(!panelStates.plot ? 'Show': 'Hide') + ' Ramachandran plot'">
+        <mat-panel-title>
+            <span>
+              <mat-icon inline>scatter_plot</mat-icon>
+              Ramachandran plot
+            </span>
+        </mat-panel-title>
+        <mat-panel-description>
 
-    <div class="plot-wrapper round-borders">
-      <plotly-plot [data]="(data$ | async)!" [layout]="(layout$ | async)!" [config]="(config$| async)!">
-      </plotly-plot>
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <!--        <div class="plot-wrapper round-borders">-->
+      <div class="plot-wrapper">
+        <plotly-plot [data]="(data$ | async)!" [layout]="(layout$ | async)!" [config]="(config$| async)!">
+        </plotly-plot>
+      </div>
+      <!--        </div>-->
+    </mat-expansion-panel>
+
+    <mat-expansion-panel class="round-borders expansion-panel viewer-expansion"
+                         (opened)="panelStates.structure = true"
+                         (closed)="panelStates.structure = false">
+      <mat-expansion-panel-header
+        class="round-borders"
+        matTooltipPosition="above"
+        [matTooltip]="(!panelStates.structure ? 'Show': 'Hide') + ' 3D structure'">
+        <mat-panel-title>
+            <span>
+              <mat-icon inline>view_in_ar</mat-icon>
+              3D view
+            </span>
+        </mat-panel-title>
+        <mat-panel-description>
+
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <!--        <div class="plot-wrapper round-borders">-->
+      <div #molstarWrapper id='molstar-parent' class="viewer"></div>
+      <!--        </div>-->
+    </mat-expansion-panel>
+  </mat-accordion>
+
+  <div class="icon-text-wrap">
+    <a [href]="fileUrl"
+       [download]="pdbID + '_torsion_angles.' + RPSettings.value.tableFormat"
+       mat-fab
+       color="primary"
+       aria-label="Download file containing information about chains, positions, residue names and their phi and psi torsion angles"
+       [matTooltip]="'Download ' + getTableFormatView() + ' file containing information about chains, positions, residue names and their phi and psi torsion angles'"
+       class="download-icon">
+      <mat-icon>download</mat-icon>
+    </a>
+    <div class="text">
+      <div>Download {{getTableFormatView()}} file with torsion angles for current chain & residue selection</div>
     </div>
+    <!--      <a [href]="fileUrl" download="torsion_angles.txt" mat-button>Download CSV file with torsion angles</a>-->
+  </div>
 
-    <div>
-      <p>
-        <a [href]="fileUrl"
-           [download]="pdbID + '_torsion_angles.' + RPSettings.value.tableFormat"
-           mat-fab
-           color="primary"
-           aria-label="Download file containing information about chains, positions, residue names and their phi and psi torsion angles"
-           [matTooltip]="'Download ' + getTableFormatView() + ' file containing information about chains, positions, residue names and their phi and psi torsion angles'"
-           class="link-in-title">
-          <mat-icon>download</mat-icon>
-        </a>
-        <span>Download {{getTableFormatView()}} file with torsion angles for current chain & residue selection</span>
-      </p>
-      <!--      <a [href]="fileUrl" download="torsion_angles.txt" mat-button>Download CSV file with torsion angles</a>-->
-    </div>
-  </mat-card-content>
-</mat-card>
+</div>
+
+<!--<div #molstarParent style='position: absolute; top: 0; left: 0; right: 0; bottom: 0'>-->
+<!--  <canvas #molstarCanvas style='position: absolute; top: 0; left: 0; right: 0; bottom: 0'></canvas>-->
+<!--</div>-->
 
 
-<div class="page-center" *ngIf="pdbStatus == 'loading'">
+<div class="status" *ngIf="pdbStatus == 'loading'">
   <mat-spinner></mat-spinner>
   <p>Loading entry data from RCSB PDB...</p>
 </div>
 
-<div class="page-center" *ngIf="pdbStatus == 'calculating'">
+<div class="status" *ngIf="pdbStatus == 'calculating'">
   <mat-spinner></mat-spinner>
   <p>Calculating angles...</p>
 </div>
 
-<div class="page-center" *ngIf="pdbStatus == 'error'">
+<div class="status" *ngIf="pdbStatus == 'error'">
   <mat-icon color="warn" style="transform: scale(5); height: 40px;width: 40px;">cancel</mat-icon>
   <p>An error has occurred!</p>
   <p>{{errorMsg}}</p>

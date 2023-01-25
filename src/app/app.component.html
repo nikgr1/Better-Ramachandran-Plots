@@ -1,41 +1,32 @@
-<mat-toolbar>
-  <span class="flex-spacer"></span>
-  <div class="logo-wrapper">
-    <div class="curved-corner-topright"></div>
-    <div class="logo-container" matTooltip="Draw Ramachandran plot for any RCSB PDB protein structure.">
-      <a routerLink="">
-        <img src="assets/cro4.png" alt="cro" width="64">
-      </a>
-      <span>Better Ramachandran plots</span>
+<div class="wrap-all">
+  <mat-toolbar>
+    <span class="flex-spacer"></span>
+    <div class="logo-wrapper">
+      <div class="curved-corner-topright"></div>
+      <div class="logo-container" matTooltip="Draw Ramachandran plot for any RCSB PDB protein structure.">
+        <a routerLink="">
+          <img src="../assets/imgs/cro4.png" alt="cro" width="64">
+        </a>
+        <span>Ramachandran plots</span>
+      </div>
+      <div class="curved-corner-topleft"></div>
     </div>
-    <div class="curved-corner-topleft"></div>
-  </div>
-  <span class="flex-spacer"></span>
-  <!--  <div style="width: 64px; height: 64px"></div>-->
-  <!--  <button mat-icon-button aria-label="Example icon-button with heart icon">-->
-  <!--    <mat-icon>favorite</mat-icon>-->
-  <!--  </button>-->
-</mat-toolbar>
+    <span class="flex-spacer"></span>
+  </mat-toolbar>
 
-<div class="container content-wrapper">
-  <router-outlet></router-outlet>
-</div>
+  <main class="container content-wrapper">
+    <router-outlet></router-outlet>
+  </main>
 
-<footer>
-  <div class="container">
-    <footer class="footer d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
+  <footer class="container footer d-flex flex-wrap justify-content-center justify-content-md-between align-items-center py-3 my-4 border-top">
+<!--    <div class="footer d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">-->
       <div class="col-md-4 d-flex align-items-center">
         <a routerLink="" class="mb-3 me-2 mb-md-0 text-muted text-decoration-none lh-1">
-          <img src="assets/cro4.png" alt="cro" width="64">
+          <img src="../assets/imgs/cro4.png" alt="cro" width="64">
         </a>
-        <span class="mb-3 mb-md-0 text-muted">{{date | date:'YYYY'}} ● Developed by Nikita Gryzunov ● Free Use</span>
+        <span class="mb-3 mb-md-0 text-muted">{{date | date:'YYYY'}}
+          <mat-icon inline>fiber_manual_record</mat-icon> Developed by Nikita Gryzunov <mat-icon inline>fiber_manual_record</mat-icon> Free Use</span>
       </div>
-
-      <!--    <ul class="nav col-md-4 justify-content-end list-unstyled d-flex">-->
-      <!--      <li class="ms-3"><a class="text-muted" href="#"><svg class="bi" width="24" height="24"><use xlink:href="#twitter"></use></svg></a></li>-->
-      <!--      <li class="ms-3"><a class="text-muted" href="#"><svg class="bi" width="24" height="24"><use xlink:href="#instagram"></use></svg></a></li>-->
-      <!--      <li class="ms-3"><a class="text-muted" href="#"><svg class="bi" width="24" height="24"><use xlink:href="#facebook"></use></svg></a></li>-->
-      <!--    </ul>-->
-    </footer>
-  </div>
-</footer>
+<!--    </div>-->
+  </footer>
+</div>

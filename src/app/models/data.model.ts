@@ -1,3 +1,10 @@
+export enum DataProcessing {
+  Loading = 'loading',
+  Calculating = 'calculating',
+  Complete = 'complete',
+  Error = 'error'
+}
+
 export interface AtomCoords {
   x: number;
   y: number;
@@ -88,3 +95,8 @@ export function generateFileFromResidues(residues: Residue[], sep = ','): string
   return table
 }
 
+
+export interface residueData {
+  residue: string,
+  values: number[][]
+}

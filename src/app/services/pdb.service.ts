@@ -64,7 +64,6 @@ export class PdbService {
       }
 
     }
-    console.log(backboneRes);
     return backboneRes;
   }
 

@@ -1,14 +1,25 @@
-import {ChangeDetectorRef, Component, OnDestroy, OnInit} from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 import {ActivatedRoute} from "@angular/router";
 import {catchError, map, merge, Observable, of, publishLast, refCount, Subscription, switchMap, tap} from "rxjs";
 import {PdbService} from "../../../services/pdb.service";
 import {
   collectChains,
+  DataProcessing,
   extractPhi,
   extractPosition,
   extractPsi,
   extractTempFactor,
-  extractText, filterResiduesByChain,
+  extractText,
+  filterResiduesByChain,
   filterResiduesByName,
   generateFileFromResidues,
   groupResiduesByCAprop,
@@ -18,14 +29,46 @@ import {Plotly} from "angular-plotly.js/lib/plotly.interface";
 import {FormControl, FormGroup} from "@angular/forms";
 import {MatButtonToggleChange} from "@angular/material/button-toggle";
 import {DomSanitizer, SafeResourceUrl} from "@angular/platform-browser";
+import {PluginContext} from 'molstar/lib/mol-plugin/context';
+import {PluginConfig} from 'molstar/lib/mol-plugin/config';
+import {colorStyleOptions, imgDownloadOptions, resNameOptions, tableFormatOptions} from "../../../constants/selections";
+import {DefaultPluginUISpec, PluginUISpec} from "molstar/lib/mol-plugin-ui/spec";
+import {createPluginUI} from "molstar/lib/mol-plugin-ui";
+import {StateObjectSelector} from "molstar/lib/mol-state";
+import {ElementRef as ElementRefReact} from "react";
+
+// const MySpec: PluginSpec = {
+//   ...DefaultPluginSpec(),
+//   config: [
+//     [PluginConfig.VolumeStreaming.Enabled, false]
+//   ],
+//   layout: {
+//     initial: {
+//       isExpanded: false,
+//       showControls: false
+//     }
+//   },
+// }
+const spec: PluginUISpec = {
+  ...DefaultPluginUISpec(),
+  layout: {
+    initial: {
+      isExpanded: false,
+      showControls: false
+    }
+  },
+  components: {
+    remoteState: 'none'
+  },
+  config: [
+    [PluginConfig.Viewport.ShowExpand, true],
+    [PluginConfig.Viewport.ShowControls, true],
+    [PluginConfig.Viewport.ShowSelectionMode, true],
+    [PluginConfig.Viewport.ShowAnimation, true],
+  ]
+};
 
 //https://plotly.com/javascript/line-and-scatter/
-enum DataProcessing {
-  Loading = 'loading',
-  Calculating = 'calculating',
-  Complete = 'complete',
-  Error = 'error'
-}
 
 @Component({
   selector: 'app-pdb-entry',
@@ -33,6 +76,14 @@ enum DataProcessing {
   styleUrls: ['./pdb-entry.component.scss']
 })
 export class PdbEntryComponent implements OnInit, OnDestroy {
+  public molPlugin!: PluginContext;
+
+  @ViewChild('molstarWrapper') set elementToCheck(element: ElementRefReact<any>) {
+    // @ts-ignore
+    if (element && element.nativeElement)
+      this.activatePlugin(element);
+  }
+
   public pdbID: string = '';
   public fetchedData$!: Observable<any>;
   public pdbEntry$: Observable<Residue[]> = of();
@@ -64,43 +115,10 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
       range: [-180, 180],
     },
   }
-  public colorStyleOptions: { value: string, view: string }[] = [
-    {value: 'default', view: 'Default'},
-    {value: 'residue', view: 'Residue'},
-    {value: 'position', view: 'Position'},
-    {value: 'chain', view: 'Chain'},
-    {value: 'tempFactor', view: 'Temperature factor (Cα)'},
-  ]
+  public colorStyleOptions = colorStyleOptions;
   public chainOptions: string[] = [];
-  public resNameOptions: { value: string, view: string }[] = [
-    {value: 'ALA', view: 'Alanine (ALA, A)'},
-    {value: 'ARG', view: 'Arginine (ARG, R)'},
-    {value: 'ASN', view: 'Asparagine (ASN, N)'},
-    {value: 'ASP', view: 'Aspartic acid (ASP, D)'},
-    {value: 'CYS', view: 'Cysteine (CYS, C)'},
-    {value: 'GLN', view: 'Glutamine (GLN, Q)'},
-    {value: 'GLU', view: 'Glutamic acid (GLU, E)'},
-    {value: 'GLY', view: 'Glycine (GLY, G)'},
-    {value: 'HIS', view: 'Histidine (HIS, H)'},
-    {value: 'ILE', view: 'Isoleucine (ILE, I)'},
-    {value: 'LEU', view: 'Leucine (LEU, L)'},
-    {value: 'LYS', view: 'Lysine (LYS, K)'},
-    {value: 'MET', view: 'Methionine (MET, M)'},
-    {value: 'PHE', view: 'Phenylalanine (PHE, F)'},
-    {value: 'PRO', view: 'Proline (PRO, P)'},
-    {value: 'SER', view: 'Serine (SER, S)'},
-    {value: 'THR', view: 'Threonine (THR, T)'},
-    {value: 'TRP', view: 'Tryptophan (TRP, W)'},
-    {value: 'TYR', view: 'Tyrosine (TYR, Y)'},
-    {value: 'VAL', view: 'Valine (VAL, V)'},
-    {value: 'PYL', view: 'Pyrrolysine (PYL, O)'},
-    {value: 'SEC', view: 'Selenocysteine (SEC, U)'},
-  ]
-
-  public tableFormatOptions = [
-    {value: 'csv', view: 'CSV', sep: ','},
-    {value: 'tsv', view: 'TSV', sep: '\t'}
-  ]
+  public resNameOptions = resNameOptions;
+  public tableFormatOptions = tableFormatOptions;
   public RPSettings = new FormGroup({
     colorStyle: new FormControl('default'),
     resNameFilter: new FormControl(this.resNameOptions.map(x => x.value)),
@@ -109,18 +127,19 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
     tableFormat: new FormControl('csv'),
   })
   public imgDownloadSetting = new FormControl('png');
-  public imgDownloadOptions = [
-    {value: 'png', view: 'PNG'},
-    {value: 'svg', view: 'SVG'},
-    {value: 'jpeg', view: 'JPEG'},
-    {value: 'webp', view: 'WEBP'},
-  ]
+  public imgDownloadOptions = imgDownloadOptions;
   public layout$: Observable<Partial<Plotly.Layout>> = of(this.layoutInit);
   public config$: Observable<Partial<Plotly.Config>> = of(this.configInit);
   private blob!: Blob;
   public fileUrl!: SafeResourceUrl;
   public errorMsg: string = 'Unknown error';
-  public panelOpenState: boolean = false;
+
+  public panelStates = {
+    settings: false,
+    plot: false,
+    structure: false
+  }
+  private model!: StateObjectSelector;
 
   getStandardDataElement(residues: Residue[]) {
     return {
@@ -130,29 +149,34 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
       mode: 'markers'
     }
   }
+
   getTableFormatView(): string {
     return this.tableFormatOptions.find(x => x.value == this.RPSettings.value.tableFormat)!.view;
   }
 
-
   generateDataFromResidues(residues: Residue[]) {
-    console.log(residues);
     residues = filterResiduesByName(residues, this.RPSettings.value.resNameFilter!);
     if (this.chainOptions.length != 0) {
-      console.log(this.chainOptions.length)
       residues = filterResiduesByChain(residues, this.RPSettings.value.chainFilter!);
     }
-    console.log(residues);
     let sep = this.tableFormatOptions.find(x => x.value == this.RPSettings.value.tableFormat)!.sep;
     this.blob = new Blob([generateFileFromResidues(residues, sep)], {type: 'application/octet-stream'});
     this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(window.URL.createObjectURL(this.blob));
+
     switch (this.RPSettings.value.colorStyle) {
       case 'tempFactor':
-        return [{...this.getStandardDataElement(residues), marker: {size: this.RPSettings.value.drawerSize ,color: extractTempFactor(residues)}}];
+        return [{
+          ...this.getStandardDataElement(residues),
+          marker: {size: this.RPSettings.value.drawerSize, color: extractTempFactor(residues)}
+        }];
       case 'residue':
         return groupResiduesByCAprop(residues, 'resName').map(
           group => {
-            return {...this.getStandardDataElement(group.residues), name: group.key, marker: {size: this.RPSettings.value.drawerSize}}
+            return {
+              ...this.getStandardDataElement(group.residues),
+              name: group.key,
+              marker: {size: this.RPSettings.value.drawerSize}
+            }
           }
         );
       case 'position':
@@ -160,11 +184,15 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
       case 'chain':
         return groupResiduesByCAprop(residues, 'chainID').map(
           group => {
-            return {...this.getStandardDataElement(group.residues), name: "Chain " + group.key, marker: {size: this.RPSettings.value.drawerSize}}
+            return {
+              ...this.getStandardDataElement(group.residues),
+              name: "Chain " + group.key,
+              marker: {size: this.RPSettings.value.drawerSize}
+            };
           }
         );
       default:
-        return [{...this.getStandardDataElement(residues), marker: {size: this.RPSettings.value.drawerSize}}]
+        return [{...this.getStandardDataElement(residues), marker: {size: this.RPSettings.value.drawerSize}}];
     }
   }
 
@@ -185,7 +213,13 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
     )
   );
 
-  constructor(private route: ActivatedRoute, private pdbS: PdbService, private sanitizer: DomSanitizer,private ref: ChangeDetectorRef) {
+  constructor(
+    private host: ElementRef,
+    private zone: NgZone,
+    private route: ActivatedRoute,
+    private pdbS: PdbService,
+    private sanitizer: DomSanitizer,
+    private ref: ChangeDetectorRef) {
   }
 
   ngOnInit(): void {
@@ -252,10 +286,79 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
     this.subscription.add(this.config$.subscribe(_ => {
       this.ref.detectChanges();
     }));
+
+    this.observer = new ResizeObserver(entries => {
+      this.zone.run(() => {
+        let width = Math.round(entries[0].contentRect.width / 100 - 0.5) * 100;
+        width = (width > 700 ? 700 : width)
+        this.layoutInit['width'] = width;
+        this.layoutInit['height'] = width;
+        this.layout$ = of(this.layoutInit);
+      });
+    });
+    this.observer.observe(this.host.nativeElement);
+
+  }
+  private observer!: ResizeObserver;
+
+  async activatePlugin(parentElem: ElementRefReact<any>) {
+    // @ts-ignore
+    const parent = parentElem.nativeElement;
+
+    this.molPlugin = await createPluginUI(parent);
+    await this.molPlugin.clear();
+
+    this.subscription.add(this.fetchedData$.subscribe(async pdbRaw => {
+      const data = await this.molPlugin.builders.data.rawData({
+        data: pdbRaw
+      });
+      const trajectory = await this.molPlugin.builders.structure.parseTrajectory(data, 'pdb');
+      await this.molPlugin.builders.structure.hierarchy.applyPreset(trajectory, 'default');
+      this.model = await this.molPlugin.builders.structure.createModel(trajectory);
+      this.subscription.add(this.molPlugin.behaviors.interaction.click.subscribe(x => {
+          }
+      ));
+      this.subscription.add(this.molPlugin.managers.structure.selection.events.changed.subscribe(x => {
+        }));
+      //Script.getStructureSelection()
+      // this.subscription.add(this.molPlugin.behaviors.interaction.drag.subscribe(x => console.log(x)));
+      // this.subscription.add(this.molPlugin.managers.interactivity.subscribe(x => console.log(x)));
+      // this.subscription.add(this.molPlugin.managers.structure.focus.behaviors.current.subscribe(x => console.log(x, this.molPlugin.managers.interactivity.lociHighlights.props)));
+
+      // //@ts-ignore
+      // this.molPlugin.managers.camera.focusLoci(ligandLoci);
+      // //@ts-ignore
+      // this.molPlugin.managers.interactivity.lociSelects.select({loci: ligandLoci});
+
+      // this.subscription.add(this.molPlugin.managers.structure.selection.events.loci.add.subscribe(x => {
+      //   //console.warn(x.structure);
+      //   let selections = this.molPlugin.managers.structure.hierarchy.selection
+      //   for (let i = 0; i < selections.structures.length; i++) {
+      //     for (let j = 0; j < selections.structures[i].components.length; j++) {
+      //       const ligandData = selections.structures[i].components[j].cell.obj?.data;
+      //       const ligandLoci = Structure.toStructureElementLoci(ligandData as any);
+      //       //console.log(i, j, ligandLoci);
+      //     }
+      //   }
+      //
+      // }))
+      // this.subscription.add(this.molPlugin.managers.structure.selection.events.changed.subscribe(x => {
+      //   let keys = this.molPlugin.managers.structure.selection.entries.keys();
+      //   // @ts-ignore
+      //   //console.log('changed', x, this.molPlugin.managers.structure.hierarchy.selection)
+      //   const ligandData = this.molPlugin.managers.structure.hierarchy.selection.structures[0]?.components[0]?.cell.obj?.data;
+      //   const ligandLoci = Structure.toStructureElementLoci(ligandData as any);
+      //   console.warn(this.molPlugin.managers.structure.selection.events.loci);
+      // }))
+    }))
+    //const data = await this.molPlugin.builders.data.download({ url: pdbEntry(this.pdbID) }, { state: { isGhost: true } });
+    //console.log(data);
+
   }
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
+    this.observer.unobserve(this.host.nativeElement);
   }
 
 
@@ -294,3 +397,4 @@ export class PdbEntryComponent implements OnInit, OnDestroy {
 
 
 }
+
